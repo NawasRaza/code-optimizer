@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Code Optimizer + Report Generator</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    textarea {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 15px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    #output, #reportSection {
+      white-space: pre-wrap;
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+    .export-buttons button {
+      margin: 5px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container form">
+    <header>Python Code Optimizer</header>
+
+    <textarea id="inputCode" placeholder="Paste your Python code here..."></textarea>
+    <input type="button" class="button" value="Optimize Code" onclick="optimizeCode()">
+
+    <h3>Optimized Output:</h3>
+    <div id="output">Paste code above and click Optimize</div>
+
+    <div id="reportSection" style="display: none;">
+      <h3>Generate Report:</h3>
+      <div class="export-buttons">
+        <button onclick="exportReport('pdf')">Download PDF</button>
+        <button onclick="exportReport('csv')">Download CSV</button>
+        <button onclick="exportReport('json')">Download JSON</button>
+      </div>
+    </div>
+
+    <input type="button" class="button" value="Logout" onclick="logout()">
+  </div>
+
+  <script>
+    let optimizedCode = '';  // Store optimized code globally
+
+    function optimizeCode() {
+      const input = document.getElementById('inputCode').value;
+      fetch('http://127.0.0.1:8000/api/optimize', {  // Ensure the route is correct
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: input }),
+        mode: 'cors'
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.optimized_code) {
+          optimizedCode = data.optimized_code;  // Store the optimized code
+          document.getElementById('output').innerText = optimizedCode;
+        } else {
+          document.getElementById('output').innerText = "Error: No optimized code found.";
+        }
+        document.getElementById('reportSection').style.display = 'block'; // Show report tools
+      })
+      .catch(err => {
+        document.getElementById('output').innerText = 'Error: ' + err;
+        document.getElementById('reportSection').style.display = 'none';
+      });
+    }
+
+    function exportReport(format) {
+      if (!optimizedCode) {
+        alert("Please optimize the code first!");
+        return;
+      }
+
+      // Pass the optimized code along with the format
+      const url = `http://127.0.0.1:8000/api/report/export?format=${format}&optimized_code=${encodeURIComponent(optimizedCode)}`;
+      window.open(url, '_blank');
+    }
+
+    function logout() {
+      window.location.href = 'index.html';
+    }
+  </script>
+
+</body>
+</html>
